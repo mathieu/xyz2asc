@@ -2,20 +2,20 @@
 #include <iostream>
 #include <fstream>
 #include <vector>
+#include <climits>
 
 #define STEP_SIZE 2
 #define NO_DATA 0
-#define MIN_X 1032501
-#define MAX_X 1040001
-#define MIN_Y 6291001
-#define MAX_Y 6318001
-#define X_SIZE ( ( MAX_X - MIN_X ) / STEP_SIZE )
-#define Y_SIZE ( ( MAX_Y - MIN_Y ) / STEP_SIZE )
+long min_x, min_y = LONG_MAX;
+long max_x, max_y = 0;
+#define X_SIZE ( ( max_x - min_x ) / STEP_SIZE )
+#define Y_SIZE ( ( max_y - min_y ) / STEP_SIZE )
 
 // ROWS = Y
 // COLUMNS = X
 
 int xyz2asc(std::ostream& output, int argc, char *argv[]);
+bool detectExtent(int argc, char *argv[]);
 
 int main(int argc, char *argv[])
 {
@@ -30,14 +30,79 @@ int main(int argc, char *argv[])
     {
         if(argv[1][0]=='-' && argv[1][1]=='o' )
         {
-            std::ofstream out(argv[2]);
-            return xyz2asc(out,argc-2,&(argv[2]));
+            if (detectExtent(argc-2,&(argv[2])))
+            {
+                std::ofstream out(argv[2]);
+                int ret = xyz2asc(out,argc-2,&(argv[2]));
+                out.close();
+                return ret;
+            }
+            else
+            {
+                std::cerr << "Abort : unable to detect extend" << std::endl;
+                return 1;
+            }
         }
     } 
     else
     {
-        return xyz2asc(std::cout,argc,argv);
+        if (detectExtent(argc,argv))
+        {
+            return xyz2asc(std::cout,argc,argv);
+        }
+        else
+        {
+            std::cerr << "Abort : unable to detect extend" << std::endl;
+            return 1;
+        }
     }
+}
+
+
+bool detectExtent( int argc, char *argv[])
+{
+        for (int file=1;file<argc;++file)
+    {
+        std::ifstream input;
+        input.open(argv[file]);
+
+        if(input.is_open())
+        {
+            std::cerr << "calculating extent " << file << "/" << argc-1 <<" : " 
+                      << argv[file] << std::endl;
+            int n=0;
+            float x,y,h;
+            
+            while(input.good())
+            {
+                input >> n >> x >> y >> h;
+                if (x > max_x)
+                {
+                    max_x = x;
+                }
+                if (x < min_x)
+                {
+                    min_x = x;
+                }
+                if (y > max_y)
+                {
+                    max_y = y;
+                }
+                if (y < min_y)
+                {
+                    min_y = y;
+                }
+            }
+            input.close();
+        } 
+        else
+        {
+            std::cerr << "Abort : unable to open " << argv[file] << std::endl;
+            return false;
+        }
+    }
+
+    return true;
 }
 
 int xyz2asc(std::ostream& out, int argc, char *argv[])
@@ -70,7 +135,7 @@ int xyz2asc(std::ostream& out, int argc, char *argv[])
 
         if(input.is_open())
         {
-            std::cerr << file << "/" << argc-1 <<" : " 
+            std::cerr << "parsing "<< file << "/" << argc-1 <<" : " 
                       << argv[file] << std::endl;
             int n=0;
             float x,y,h;
@@ -79,12 +144,13 @@ int xyz2asc(std::ostream& out, int argc, char *argv[])
             {
                 input >> n >> x >> y >> h;
 #if 0
-                std::cerr << ((int)y - MIN_Y)/STEP_SIZE <<","
-                          << ((int)x - MIN_X)/STEP_SIZE << std::endl;
+                std::cerr << ((int)y - min_y)/STEP_SIZE <<","
+                          << ((int)x - min_x)/STEP_SIZE << std::endl;
 #endif
-                heights[((int)y - MIN_Y)/STEP_SIZE]
-                       [((int)x - MIN_X)/STEP_SIZE] = h;
+                heights[((int)y - min_y)/STEP_SIZE]
+                       [((int)x - min_x)/STEP_SIZE] = h;
             }
+            input.close();
         } 
         else
         {
@@ -97,8 +163,8 @@ int xyz2asc(std::ostream& out, int argc, char *argv[])
     std::cerr << "writing output" << std::endl;
     out << "ncols        " << X_SIZE << std::endl;
     out << "nrows        " << Y_SIZE << std::endl;
-    out << "xllcorner    " << MIN_X << std::endl;
-    out << "yllcorner    " << MIN_Y << std::endl;
+    out << "xllcorner    " << min_x << std::endl;
+    out << "yllcorner    " << min_y << std::endl;
     out << "cellsize     " << STEP_SIZE << std::endl;
     out << "NODATA_value " << NO_DATA << std::endl;
 
