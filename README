@@ -1,0 +1,2 @@
+transform xyz points list to a ascii grid provided that the xyz points are on a grid :-)
+STEP_SIZE is hardcoded to 2
