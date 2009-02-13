@@ -6,10 +6,10 @@
 
 #define STEP_SIZE 2
 #define NO_DATA 0
-long min_x, min_y = LONG_MAX;
-long max_x, max_y = 0;
-#define X_SIZE ( ( max_x - min_x ) / STEP_SIZE )
-#define Y_SIZE ( ( max_y - min_y ) / STEP_SIZE )
+long min_x= LONG_MAX, min_y = LONG_MAX;
+long max_x=0, max_y = 0;
+#define X_SIZE ( ( max_x - min_x ) / STEP_SIZE +1)
+#define Y_SIZE ( ( max_y - min_y ) / STEP_SIZE +1)
 
 // ROWS = Y
 // COLUMNS = X
@@ -61,7 +61,7 @@ int main(int argc, char *argv[])
 
 bool detectExtent( int argc, char *argv[])
 {
-        for (int file=1;file<argc;++file)
+    for (int file=1;file<argc;++file)
     {
         std::ifstream input;
         input.open(argv[file]);
@@ -101,6 +101,11 @@ bool detectExtent( int argc, char *argv[])
             return false;
         }
     }
+
+    std::cerr << "ncols        " << X_SIZE << std::endl;
+    std::cerr << "nrows        " << Y_SIZE << std::endl;
+    std::cerr << "xllcorner    " << min_x << std::endl;
+    std::cerr << "yllcorner    " << min_y << std::endl;
 
     return true;
 }
